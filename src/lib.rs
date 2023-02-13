@@ -7,13 +7,15 @@ use std::str::FromStr;
 pub struct Cave{
     source: Point,
     structure: HashMap<usize, HashMap<usize, Material>>,
+    lowest_platform: usize
 }
 
 impl Cave{
     fn new() -> Self{
         Cave{
             source: Point{x:500,y:0},
-            structure: HashMap::new()
+            structure: HashMap::new(),
+            lowest_platform: 0
         }
     }
 
@@ -45,6 +47,10 @@ impl Cave{
     }
 
     fn add_sand(&mut self) -> Option<Point>{
+        if self[&self.source] == Material::Sand{
+            return None;
+        }
+
         let end = self.drop_sand(&self.source.clone());
         if let Some(point) = end{
             self[&point] = Material::Sand;
@@ -54,10 +60,6 @@ impl Cave{
 
     fn drop_sand(&mut self, point: &Point) -> Option<Point>{
         let &Point{x,y} = point;
-
-        if y > self.bottom(x){
-            return None;
-        }
 
         match vec![
             Point{x,y:y+1},
@@ -103,7 +105,13 @@ impl Index<&Point> for Cave{
         self.structure
             .get(&index.x)
             .and_then(|col| col.get(&index.y))
-            .unwrap_or(&Material::Air)
+            .unwrap_or({
+                if index.y >= self.lowest_platform + 2{
+                    &Material::Rock
+                }else{
+                    &Material::Air
+                }
+            })
     }
 }
 
@@ -164,6 +172,7 @@ impl FromStr for Cave{
                 }
             }
         }
+        cave.lowest_platform = cave.structure.keys().map(|c| cave.bottom(*c)).max().expect("Should not be empty");
         Ok(cave)
     }
 }
@@ -226,7 +235,7 @@ impl FromStr for Point{
 /// ```
 /// use advent_of_code_2022_14::resting_sand;
 /// assert_eq!(
-///     24,
+///     93,
 ///     resting_sand(concat!(
 ///         "498,4 -> 498,6 -> 496,6\n",
 ///         "503,4 -> 502,4 -> 502,9 -> 494,9"
