@@ -6,5 +6,5 @@ fn main() {
     let file_path = &args[1];
     let contents = fs::read_to_string(file_path).expect("Should be able to read file");
 
-    println!("{}", resting_sand(&contents));
+    println!("There is {} sand", resting_sand(&contents));
 }
